@@ -1,7 +1,5 @@
 'use strict';
 
-var db_utils = require('../lib/db-utils.js');
-
 /*
   ======== A Handy Little Nodeunit Reference ========
   https://github.com/caolan/nodeunit
@@ -22,15 +20,36 @@ var db_utils = require('../lib/db-utils.js');
     test.ifError(value)
 */
 
-exports['awesome'] = {
-  setUp: function(done) {
-    // setup here
-    done();
+var DBUtils = require('../lib/db-utils.js');
+
+// Set up database
+var anyDB = require('any-db');
+anyDB.adapters.postgres.forceJS = true;
+
+var dbPool = anyDB.createPool('postgres://localhost:5432/test_db', {
+  min: 5,
+  max: 15,
+  onConnect: function (conn, done) {
+    done(null, conn);
   },
-  'no args': function(test) {
+  reset: function (conn, done) {
+    done(null);
+  }
+});
+
+exports.awesome = {
+  setUp: function (done) {
+    var db = new DBUtils(dbPool);
+    db.createSchemas('db', function() {
+      // setup here
+      done();
+    });
+
+  },
+  'no args': function (test) {
     test.expect(1);
     // tests here
-    test.equal(db_utils.awesome(), 'awesome', 'should be awesome.');
+    // test.equal(db_utils.awesome(), 'awesome', 'should be awesome.');
     test.done();
-  },
+  }
 };
