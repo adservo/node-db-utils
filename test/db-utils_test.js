@@ -23,33 +23,23 @@
 var DBUtils = require('../lib/db-utils.js');
 
 // Set up database
-var anyDB = require('any-db');
-anyDB.adapters.postgres.forceJS = true;
-
-var dbPool = anyDB.createPool('postgres://localhost:5432/test_db', {
-  min: 5,
-  max: 15,
-  onConnect: function (conn, done) {
-    done(null, conn);
-  },
-  reset: function (conn, done) {
-    done(null);
-  }
-});
+var dbPool = require('db-pool');
+var testPool = dbPool.pool('test');
 
 exports.awesome = {
   setUp: function (done) {
-    var db = new DBUtils(dbPool);
-    db.createSchemas('db', function() {
-      // setup here
-      done();
-    });
-
+    new DBUtils(testPool)
+      .on('end', function () { done(); })
+      .createSchemas('db');
   },
   'no args': function (test) {
-    test.expect(1);
+    // test.expect(1);
     // tests here
-    // test.equal(db_utils.awesome(), 'awesome', 'should be awesome.');
+    test.equal('awesome', 'awesome', 'should be awesome.');
     test.done();
+  },
+  tearDown: function (done) {
+    dbPool.close();
+    done();
   }
 };
